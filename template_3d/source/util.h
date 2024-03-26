@@ -1,0 +1,13 @@
+#ifndef UTIL_H
+#define UTIL_H
+
+#include "tests.h"
+
+enum {
+	VIEWPORT_X0 = 128 - TEST_RESULT_WIDTH / 2,
+	VIEWPORT_X1 = VIEWPORT_X0 + TEST_RESULT_WIDTH - 1,
+	VIEWPORT_Y0 = 96 - TEST_RESULT_HEIGHT / 2,
+	VIEWPORT_Y1 = VIEWPORT_Y0 + TEST_RESULT_HEIGHT - 1,
+};
+
+#endif

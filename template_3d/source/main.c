@@ -1,5 +1,6 @@
 #include "results_bin.h"
-#include "tests.h"
+#include "util.h"
+
 #include <fat.h>
 #include <filesystem.h>
 #include <nds.h>
@@ -21,16 +22,12 @@ enum {
 	NUM_DISPLAY_MODES,
 };
 
-typedef void (*test_func)(void);
 test_func test_funcs[] = {
 	test0,
 	test1,
 };
 
 #define NUM_TESTS (sizeof(test_funcs) / sizeof(test_func))
-#define TEST_RESULT_WIDTH 128
-#define TEST_RESULT_HEIGHT 128
-#define TEST_RESULT_SIZE (2 * TEST_RESULT_WIDTH * TEST_RESULT_HEIGHT)
 
 static struct global_state {
 	int mode;
@@ -285,18 +282,17 @@ run_test()
 static int
 check_test()
 {
-	int offset = gs.test_num * TEST_RESULT_SIZE;
-	if (offset + TEST_RESULT_SIZE > results_bin_size) {
+	int offset = gs.test_num * TEST_RESULT_SIZE_BYTES;
+	if (offset + TEST_RESULT_SIZE_BYTES > results_bin_size) {
 		return 1;
 	}
 
 	u16 *src = (u16 *)(results_bin + offset);
 
-	for (int y = 0; y < TEST_RESULT_HEIGHT; y++) {
-		for (int x = 0; x < TEST_RESULT_WIDTH; x++) {
-			if (VRAM_A[(y + 32) * 256 + 64 + x] != *src++) {
+	for (int y = VIEWPORT_Y0; y <= VIEWPORT_Y1; y++) {
+		for (int x = VIEWPORT_X0; x <= VIEWPORT_X1; x++) {
+			if (VRAM_A[y * 256 + x] != *src++)
 				return 1;
-			}
 		}
 	}
 
@@ -313,25 +309,25 @@ record_test()
 		fseek(gs.file, 0, SEEK_SET);
 	}
 
-	for (int y = 0; y < TEST_RESULT_HEIGHT; y++) {
-		fwrite(&VRAM_A[(y + 32) * 256 + 64], 1, TEST_RESULT_WIDTH * 2,
-				gs.file);
+	for (int y = VIEWPORT_Y0; y <= VIEWPORT_Y1; y++) {
+		fwrite(&VRAM_A[y * 256 + VIEWPORT_X0], 1,
+				TEST_RESULT_WIDTH * 2, gs.file);
 	}
 }
 
 static void
 copy_expected_to_vram()
 {
-	int offset = gs.test_num * TEST_RESULT_SIZE;
-	if (offset + TEST_RESULT_SIZE > results_bin_size) {
+	int offset = gs.test_num * TEST_RESULT_SIZE_BYTES;
+	if (offset + TEST_RESULT_SIZE_BYTES > results_bin_size) {
 		return;
 	}
 
 	u16 *src = (u16 *)(results_bin + offset);
 
-	for (int y = 0; y < TEST_RESULT_HEIGHT; y++) {
-		for (int x = 0; x < TEST_RESULT_WIDTH; x++) {
-			VRAM_B[(y + 32) * 256 + 64 + x] = *src++;
+	for (int y = VIEWPORT_Y0; y <= VIEWPORT_Y1; y++) {
+		for (int x = VIEWPORT_X0; x <= VIEWPORT_X1; x++) {
+			VRAM_B[y * 256 + x] = *src++;
 		}
 	}
 }
