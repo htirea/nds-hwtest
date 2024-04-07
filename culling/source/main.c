@@ -24,32 +24,9 @@ enum {
 
 test_func test_funcs[] = {
 	test0,
-	test1,
-	test2,
-	test3,
-	test4,
-	test5,
-	test6,
-	test7,
-	test8,
-	test9,
-	test10,
-	test11,
-	test12,
-	test13,
-	test14,
-	test15,
-	test16,
-	test17,
-	test18,
-	test19,
-	test20,
-	test21,
-	test22,
-	test23,
 };
 
-#define NUM_TESTS (sizeof(test_funcs) / sizeof(test_func))
+#define NUM_TESTS 48
 
 static struct global_state {
 	int mode;
@@ -293,7 +270,7 @@ mode_record()
 static void
 run_test()
 {
-	test_funcs[gs.test_num]();
+	test_funcs[0](gs.test_num);
 	swiWaitForVBlank();
 
 	REG_DISPCAPCNT |= DCAP_ENABLE;
