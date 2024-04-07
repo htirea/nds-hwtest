@@ -35,10 +35,10 @@ setup_test()
 }
 
 void
-draw_vtx(int pos, int which)
+draw_line_vtx(int pos, int which, int xy, int z, int xydiff)
 {
-	int x = !which ? 1024 : -1024;
-	int y = !which ? 1024 : -1024;
+	int x = !which ? xy : -xy;
+	int y = !which ? xy : -xy;
 
 	switch (pos) {
 	case 0:
@@ -59,11 +59,15 @@ draw_vtx(int pos, int which)
 		break;
 	}
 
-	gfx_vertex16(x, y, 0);
+	x -= xydiff;
+	y -= xydiff;
+
+	gfx_vertex16(x, y, z);
 }
 
 void
-draw_test_line(int pos, int type, int which)
+draw_test_line_z_diff(int pos, int type, int which, int xy, int z0, int z1,
+		int z2, int xydiff)
 {
 	int cull_bits = 0;
 	switch (pos) {
@@ -86,21 +90,47 @@ draw_test_line(int pos, int type, int which)
 
 	switch (type) {
 	case 0:
-		draw_vtx(pos, which);
-		draw_vtx(pos, which);
-		draw_vtx(pos, !which);
+		draw_line_vtx(pos, which, xy, z0, 0);
+		draw_line_vtx(pos, which, xy, z1, xydiff);
+		draw_line_vtx(pos, !which, xy, z2, 0);
 		break;
 	case 1:
-		draw_vtx(pos, which);
-		draw_vtx(pos, !which);
-		draw_vtx(pos, !which);
+		draw_line_vtx(pos, which, xy, z0, 0);
+		draw_line_vtx(pos, !which, xy, z1, 0);
+		draw_line_vtx(pos, !which, xy, z2, xydiff);
 		break;
 	default:
-		draw_vtx(pos, which);
-		draw_vtx(pos, !which);
-		draw_vtx(pos, which);
+		draw_line_vtx(pos, which, xy, z0, 0);
+		draw_line_vtx(pos, !which, xy, z1, 0);
+		draw_line_vtx(pos, which, xy, z2, xydiff);
 		break;
 	}
+}
+
+void
+do_test(int type, int which, int xy, int z0, int z1, int z2, int xydiff)
+{
+	setup_test();
+	gfx_color(31, 31, 31);
+
+	draw_test_line_z_diff(0, type, which, xy, z0, z1, z2, xydiff);
+	draw_test_line_z_diff(1, type, which, xy, z0, z1, z2, xydiff);
+	draw_test_line_z_diff(2, type, which, xy, z0, z1, z2, xydiff);
+	draw_test_line_z_diff(3, type, which, xy, z0, z1, z2, xydiff);
+
+	glFlush(0);
+}
+
+void
+do_test_6_11(int type, int which, int z0, int z1, int z2)
+{
+	do_test(type, which, 1024, z0, z1, z2, 0);
+}
+
+void
+do_test_1_5(int type, int which)
+{
+	do_test_6_11(type, which, 0, 0, 0);
 }
 
 /*
@@ -118,91 +148,161 @@ draw_test_line(int pos, int type, int which)
  *
  * vtx0 is the top right vertex
  *
- * test3:
- * test4:
- * test5:
+ * tests 3-5:
+ * same as tests 0-2 but vtx0 is the bottom left vertex
  *
- * same as above but vtx0 is the bottom left vertex
+ * tests 6-11
+ * same as tests 0-6 but all z values are different
+ *
+ * tests 12-17:
+ * same as tests 0-6 but one of the similar vertices has its x/y coords
+ * offset by 1. The x/y coords are adjusted so that the screen x/y coords
+ * end up the same.
+ *
+ * tests-18-23:
+ * same as tests 12-17 but the x/y coords are not adjusted. So the screen x/y
+ * coords of the 'same' vertices are different.
  */
 void
 test0(void)
 {
-	setup_test();
-	gfx_color(31, 31, 31);
-
-	draw_test_line(0, 0, 0);
-	draw_test_line(1, 0, 0);
-	draw_test_line(2, 0, 0);
-	draw_test_line(3, 0, 0);
-
-	glFlush(0);
+	do_test_1_5(0, 0);
 }
 
 void
 test1(void)
 {
-	setup_test();
-	gfx_color(31, 31, 31);
-
-	draw_test_line(0, 1, 0);
-	draw_test_line(1, 1, 0);
-	draw_test_line(2, 1, 0);
-	draw_test_line(3, 1, 0);
-
-	glFlush(0);
+	do_test_1_5(1, 0);
 }
 
 void
 test2(void)
 {
-	setup_test();
-	gfx_color(31, 31, 31);
-
-	draw_test_line(0, 2, 0);
-	draw_test_line(1, 2, 0);
-	draw_test_line(2, 2, 0);
-	draw_test_line(3, 2, 0);
-
-	glFlush(0);
+	do_test_1_5(2, 0);
 }
 
 void
 test3(void)
 {
-	setup_test();
-
-	draw_test_line(0, 0, 1);
-	draw_test_line(1, 0, 1);
-	draw_test_line(2, 0, 1);
-	draw_test_line(3, 0, 1);
-
-	glFlush(0);
+	do_test_1_5(0, 1);
 }
 
 void
 test4(void)
 {
-	setup_test();
-	gfx_color(31, 31, 31);
-
-	draw_test_line(0, 1, 1);
-	draw_test_line(1, 1, 1);
-	draw_test_line(2, 1, 1);
-	draw_test_line(3, 1, 1);
-
-	glFlush(0);
+	do_test_1_5(1, 1);
 }
 
 void
 test5(void)
 {
-	setup_test();
-	gfx_color(31, 31, 31);
+	do_test_1_5(2, 1);
+}
 
-	draw_test_line(0, 2, 1);
-	draw_test_line(1, 2, 1);
-	draw_test_line(2, 2, 1);
-	draw_test_line(3, 2, 1);
+void
+test6(void)
+{
+	do_test_6_11(0, 0, 1024, 2048, 3072);
+}
 
-	glFlush(0);
+void
+test7(void)
+{
+	do_test_6_11(1, 0, 1024, 2048, 3072);
+}
+
+void
+test8(void)
+{
+	do_test_6_11(2, 0, 1024, 2048, 3072);
+}
+
+void
+test9(void)
+{
+	do_test_6_11(0, 1, 1024, 2048, 3072);
+}
+
+void
+test10(void)
+{
+	do_test_6_11(1, 1, 1024, 2048, 3072);
+}
+
+void
+test11(void)
+{
+	do_test_6_11(2, 1, 1024, 2048, 3072);
+}
+
+void
+test12(void)
+{
+	do_test(0, 0, 1010, 0, 0, 0, 1);
+}
+
+void
+test13(void)
+{
+	do_test(1, 0, 1010, 0, 0, 0, 1);
+}
+
+void
+test14(void)
+{
+	do_test(2, 0, 1010, 0, 0, 0, 1);
+}
+
+void
+test15(void)
+{
+	do_test(0, 1, 1010, 0, 0, 0, 1);
+}
+
+void
+test16(void)
+{
+	do_test(1, 1, 1010, 0, 0, 0, 1);
+}
+
+void
+test17(void)
+{
+	do_test(2, 1, 1010, 0, 0, 0, 1);
+}
+
+void
+test18(void)
+{
+	do_test(0, 0, 1024, 0, 0, 0, 1);
+}
+
+void
+test19(void)
+{
+	do_test(1, 0, 1024, 0, 0, 0, 1);
+}
+
+void
+test20(void)
+{
+	do_test(2, 0, 1024, 0, 0, 0, 1);
+}
+
+void
+test21(void)
+{
+	do_test(0, 1, 1024, 0, 0, 0, 1);
+}
+
+void
+test22(void)
+{
+	do_test(1, 1, 1024, 0, 0, 0, 1);
+}
+
+void
+test23(void)
+{
+	do_test(2, 1, 1024, 0, 0, 0, 1);
 }
